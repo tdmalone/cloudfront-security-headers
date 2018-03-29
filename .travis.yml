@@ -1,0 +1,94 @@
+language: node_js
+services: docker
+node_js: 6.10
+
+env:
+  global:
+
+    - AWS_ACCESS_KEY_ID=AKIAJD223QLN3PRDTPFQ
+    - AWS_DEFAULT_REGION=us-east-1
+
+    - LAMBDA_NAME=cloudfrontSecurityHeaders
+    - LAMBDA_DESCRIPTION="Adds security headers to CloudFront responses."
+    - LAMBDA_TIMEOUT=3
+    - LAMBDA_ROLE=arn:aws:iam::873114526714:role/service-role/genericLambdaEdgeRole
+    - LAMBDA_ALIAS=prod
+
+    - LAMBDA_RUNTIME=nodejs6.10
+    - LAMBDA_MODULE=index
+    - LAMBDA_HANDLER=handler
+
+    # AWS_SECRET_ACCESS_KEY
+    - secure: aWe5nRsH/ymoeWy+0Y+zFuZzrn7o+YC61aeZcZLkeU0y5WG5Oe5Pr4MJkH5BphvSVH2fUfxuCUtlbIFV3/DsJIwRfAeMP0TgJ0/78dsTJhOyWaeA5wIKMjoxUTDgrLhCIDQvaXv/F3+gtk9+iK0YCq5843DBODQo9+utCCz2W6704bXsO0vhAUvCxXKHBnEjyWj1ugXH9/8kHHZoxJ2HcUc+NiMUKaOO6JwqssYR63MYATrzjbgPDDGKJJRKBkR6itb8+nw27bwWXQ0g2Z7h4JsnNAIwTAAVNWBC0SsouhfziyV0S85PA9O80U0oh25sGL1DAAEa9crD7tZV9hT2mEmdDdOG1kGDDtWgzXLaREnb1KItMb8xMdV3qf4o3/ZJko1d0eyV8B1I1/o08y5fjajkXoUeKemFwDxsPcC3jSkbeZrEUm9fn5x7kTq6apD/I0gNE3xp55QOMo3j3oInOYnhLBYeCN7uxSO3LAE4MII6MFFAaUr3XU+r8VkcYx34HevrgHwt054GG80epbXaq/2AT716Y0r5zOPTPoUbehu+c/W4+tkd+hm5mNCm57lft95i07AO8QMTouXqZco/pV2U4w8jJou8Tn+1ufao8IQ5RqPDIBUKbp4j8ZczK4fZyM+YM5Z45A+rVIqx/gRYCBW/wxKV4nwxrY3+pnzqLwA=
+
+cache:
+  yarn: true
+  directories:
+    - node_modules
+
+install: yarn
+
+script:
+  - yarn lint
+  - yarn test
+
+before_deploy:
+  - rm -rf coverage node_modules tests .*rc.js
+
+deploy:
+
+  # Deploy to $LATEST on dev branch. (i.e. don't publish a new version).
+
+  - on:
+      branch: dev
+    publish: false
+
+    provider: lambda
+    function_name: $LAMBDA_NAME
+    region: $AWS_DEFAULT_REGION
+    role: $LAMBDA_ROLE
+    description: $LAMBDA_DESCRIPTION
+    runtime: $LAMBDA_RUNTIME
+    timeout: $LAMBDA_TIMEOUT
+    module_name: $LAMBDA_MODULE
+    handler_name: $LAMBDA_HANDLER
+    access_key_id: $AWS_ACCESS_KEY_ID
+    secret_access_key: $AWS_SECRET_ACCESS_KEY
+    skip_cleanup: true
+
+  # Deploy and publish a new version on master branch.
+
+  - on:
+      branch: master
+    publish: true
+
+    provider: lambda
+    function_name: $LAMBDA_NAME
+    region: $AWS_DEFAULT_REGION
+    role: $LAMBDA_ROLE
+    description: $LAMBDA_DESCRIPTION
+    runtime: $LAMBDA_RUNTIME
+    timeout: $LAMBDA_TIMEOUT
+    module_name: $LAMBDA_MODULE
+    handler_name: $LAMBDA_HANDLER
+    access_key_id: $AWS_ACCESS_KEY_ID
+    secret_access_key: $AWS_SECRET_ACCESS_KEY
+    skip_cleanup: true
+
+after_deploy:
+
+  # Set a Lambda alias to the most recently deployed version.
+  - if [ "master" = "${TRAVIS_BRANCH}" ]; then
+      pip install awscli --upgrade --user;
+      export MOST_RECENT=$(aws lambda list-versions-by-function --function "${LAMBDA_NAME}" --max-items 10000 | node -e "let stdin=''; process.stdin.on('data',(chunk)=>{stdin+=chunk}).on('end',()=>{console.log(JSON.parse(stdin).Versions.pop().Version)})");
+      aws lambda update-alias --function-name "${LAMBDA_NAME}" --name "${LAMBDA_ALIAS}" --function-version "${MOST_RECENT}";
+    fi;
+
+notifications:
+  email: false
+  webhooks:
+    urls: https://api.tm.id.au/v2/travis/jobStatus
+  slack:
+    on_start: always
+    rooms:
+      - secure: FxtoWhc6tUscuwade8CaBLrOXfm/PVSICN4SsJWjz/1n6WE+0ovxrfWogdu2AuI8ccAv+qIKgmEclK/Tl7x4+qQjkBQ/3vIHPpkYZqmSUMnsV5bno5EWa2Z6ZsDzMzFwhDC150amyT4DETwo6JJHPVdosd5nqMPS7wr/+M6rxQw4gkF7mq+TawJP1n9ubUdlmCLm6UROs0veLgRWfD97FUpVBb9QFefTcu+lbOKIaag7C59oLq3abXeOMKjJyzmYHynHN266UPoU3EYmbhVxr6nY57ML34J3aVbB9u+7+stLw5O0uWT8Czokb7YhW8WtgxD2YzBtQgiF8nEvOf15Xf2SyPRs1iNPtCPelOOuKcp6u1Bmf6SfI4jbKiOUCOgDGrXhmzMPb9fKlWFEHFmQlstPhXUtjHoemMoM5dw5zXqzcGCgJT2YC8PdJSH0gC/LealmKJF+c7Q6nC1ivL1x4NebgDI4gnYoFgxzlndTEmgqmwvL4nsMgE9qibiVgLgMMWW4G8GpyS4OKr/feD2ETarCuXPc4iqQ5l/opAa6Tljr7tOT2YofD+Q7h2nkeIhkAlisNijEeHTeMjaSAqqpqYvR2tHyzoY+7FPZDEcsQX6QpPra2Vjh+4Lb73AZKxNgMwOCXORA7kVSiybj6kcD7zCqFKQ+hePEPjPrQB3nFQk=
