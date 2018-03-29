@@ -25,6 +25,8 @@ exports.handler = ( event, context, callback ) => {
     )
   } ];
 
+  // TODO: Enable once site is confirmed ready for it =]
+  /*
   headers['content-security-policy'] = [ {
     key:   'Content-Security-Policy',
     value: (
@@ -35,6 +37,7 @@ exports.handler = ( event, context, callback ) => {
       'object-src \'none\''
     )
   } ];
+  */
 
   headers['x-content-type-options'] = [ {
     key:   'X-Content-Type-Options',
