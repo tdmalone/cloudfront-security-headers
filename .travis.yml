@@ -7,6 +7,7 @@ env:
 
     - AWS_ACCESS_KEY_ID=AKIAJD223QLN3PRDTPFQ
     - AWS_DEFAULT_REGION=us-east-1
+    - CLOUDFRONT_DISTRIBUTION_ID=E3AS3PFNNAK3ZK
 
     - LAMBDA_NAME=cloudfrontSecurityHeaders
     - LAMBDA_DESCRIPTION="Adds security headers to CloudFront responses."
@@ -83,6 +84,15 @@ after_deploy:
       export MOST_RECENT=$(aws lambda list-versions-by-function --function "${LAMBDA_NAME}" --max-items 10000 | node -e "let stdin=''; process.stdin.on('data',(chunk)=>{stdin+=chunk}).on('end',()=>{console.log(JSON.parse(stdin).Versions.pop().Version)})");
       aws lambda update-alias --function-name "${LAMBDA_NAME}" --name "${LAMBDA_ALIAS}" --function-version "${MOST_RECENT}";
     fi;
+
+  # Set CloudFront connection to the most recently deployed version, since it can't use aliases.
+  - if [ "master" = "${TRAVIS_BRANCH}" ]; then
+      aws cloudfront get-distribution-config --id "${CLOUDFRONT_DISTRIBUTION_ID}" > distribution-config.json;
+      export CONFIG_ETAG="$( node -e "const config = require( './distribution-config.json' ); console.log( config.ETag );" )";
+      export NEW_CONFIG="$( node -e "const config = require( './distribution-config.json' ); config.DistributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations.Items.forEach( ( lambda ) => { if ( 'origin-response' === lambda.EventType ) { let arn = lambda.LambdaFunctionARN.split( ':' ); arn[ arn.length - 1 ] = ${MOST_RECENT}; lambda.LambdaFunctionARN = arn.join( ':' ); } }); console.log( JSON.stringify( config.DistributionConfig ) );" )";
+      aws cloudfront update-distribution --id "${CLOUDFRONT_DISTRIBUTION_ID}" --distribution-config ${NEW_CONFIG} --if-match ${CONFIG_ETAG}
+    fi;
+
 
 notifications:
   email: false
