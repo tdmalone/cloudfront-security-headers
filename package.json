@@ -1,0 +1,34 @@
+{
+  "name": "cloudfront-security-headers",
+  "version": "0.0.0",
+  "description": "...",
+  "homepage": "https://github.com/tdmalone/cloudfront-security-headers#readme",
+  "repository": "git+https://github.com/tdmalone/cloudfront-security-headers.git",
+  "main": "index.js",
+  "author": "Tim Malone <tdmalone@gmail.com>",
+  "scripts": {
+    "lint": "DEBUG=eslint:cli-engine eslint --color --ignore-pattern '/coverage/' --ignore-pattern '/docs/' --ignore-pattern '!.eslintrc.js' \"**/*.js\"",
+    "fix": "yarn lint --fix",
+    "test": "yarn unit-tests && yarn execute",
+    "unit-tests": "jest --verbose --coverage",
+    "execute": "docker run --rm -e CI -v \"${PWD}\":/var/task lambci/lambda:nodejs6.10 index.handler \"$(cat tests/fixtures/cloudfront-response.json)\""
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "cloudfront"
+  ],
+  "jest": {
+    "testMatch": [
+      "**/tests/**/*.js"
+    ]
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "eslint": "^4.8.0",
+    "eslint-config-tdmalone": "^0.0.1",
+    "jest": "^21.2.1",
+    "jest-tobetype": "^1.1.0"
+  }
+}
