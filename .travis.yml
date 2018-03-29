@@ -11,7 +11,7 @@ env:
     - LAMBDA_NAME=cloudfrontSecurityHeaders
     - LAMBDA_DESCRIPTION="Adds security headers to CloudFront responses."
     - LAMBDA_TIMEOUT=3
-    - LAMBDA_ROLE=arn:aws:iam::873114526714:role/genericLambdaEdgeRole
+    - LAMBDA_ROLE=arn:aws:iam::873114526714:role/service-role/genericLambdaEdgeRole
     - LAMBDA_ALIAS=prod
 
     - LAMBDA_RUNTIME=nodejs6.10
