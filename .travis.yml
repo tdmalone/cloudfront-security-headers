@@ -90,7 +90,7 @@ after_deploy:
       aws cloudfront get-distribution-config --id "${CLOUDFRONT_DISTRIBUTION_ID}" > distribution-config.json;
       export CONFIG_ETAG="$( node -e "const config = require( './distribution-config.json' ); console.log( config.ETag );" )";
       export NEW_CONFIG="$( node -e "const config = require( './distribution-config.json' ); config.DistributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations.Items.forEach( ( lambda ) => { if ( 'origin-response' === lambda.EventType ) { let arn = lambda.LambdaFunctionARN.split( ':' ); arn[ arn.length - 1 ] = ${MOST_RECENT}; lambda.LambdaFunctionARN = arn.join( ':' ); } }); console.log( JSON.stringify( config.DistributionConfig ) );" )";
-      aws cloudfront update-distribution --id "${CLOUDFRONT_DISTRIBUTION_ID}" --distribution-config ${NEW_CONFIG} --if-match ${CONFIG_ETAG}
+      aws cloudfront update-distribution --id "${CLOUDFRONT_DISTRIBUTION_ID}" --distribution-config ${NEW_CONFIG} --if-match ${CONFIG_ETAG};
     fi;
 
 
