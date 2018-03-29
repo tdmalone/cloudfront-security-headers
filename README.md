@@ -1,0 +1,1 @@
+# cloudfront-security-headers
