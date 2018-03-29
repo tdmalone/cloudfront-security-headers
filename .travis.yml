@@ -9,7 +9,7 @@ env:
     - AWS_DEFAULT_REGION=us-east-1
 
     - LAMBDA_NAME=cloudfrontSecurityHeaders
-    - LAMBDA_DESCRIPTION=...
+    - LAMBDA_DESCRIPTION="Adds security headers to CloudFront responses."
     - LAMBDA_TIMEOUT=3
     - LAMBDA_ROLE=arn:aws:iam::873114526714:role/genericLambdaEdgeRole
     - LAMBDA_ALIAS=prod
@@ -33,9 +33,7 @@ script:
   - yarn test
 
 before_deploy:
-  - yarn remove aws-sdk
   - rm -rf coverage node_modules tests .*rc.js
-  - yarn --prod
 
 deploy:
 
