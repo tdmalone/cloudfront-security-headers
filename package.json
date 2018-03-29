@@ -1,6 +1,6 @@
 {
   "name": "cloudfront-security-headers",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A quick Lambda@Edge function to add security headers to AWS CloudFront responses.",
   "homepage": "https://github.com/tdmalone/cloudfront-security-headers#readme",
   "repository": "git+https://github.com/tdmalone/cloudfront-security-headers.git",
