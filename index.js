@@ -19,25 +19,26 @@ exports.handler = ( event, context, callback ) => {
   headers['strict-transport-security'] = [ {
     key:   'Strict-Transport-Security',
     value: (
-      'max-age= 63072000; ' +
+      'max-age=63072000; ' +
       'includeSubdomains; ' +
       'preload'
     )
   } ];
 
-  // TODO: Enable once site is confirmed ready for it =]
-  /*
+  // TODO: Enable more once site is confirmed ready for it =]
   headers['content-security-policy'] = [ {
     key:   'Content-Security-Policy',
     value: (
+      'default-src: https: \'unsafe-inline\'; ' +
+      'object-src \'none\''
+      /*
       'default-src \'none\'; ' +
       'img-src \'self\'; ' +
       'script-src \'self\'; ' +
       'style-src \'self\'; ' +
-      'object-src \'none\''
+      */
     )
   } ];
-  */
 
   headers['x-content-type-options'] = [ {
     key:   'X-Content-Type-Options',
